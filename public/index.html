@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прогноз погоды</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Прогноз погоды</h1>
+    
+    <label for="citySelect">Выберите город:</label>
+    <select id="citySelect">
+        <option value="">--Выберите город--</option>
+        <option value="Kyiv">Киев</option>
+        <option value="Kharkiv">Харьков</option>
+        <option value="Odesa">Одесса</option>
+        <option value="Dnipro">Днепр</option>
+        <option value="Lviv">Львов</option>
+        <option value="Zaporizhzhia">Запорожье</option>
+        <option value="Kryvyi Rih">Кривой Рог</option>
+        <option value="Mykolaiv">Николаев</option>
+        <option value="Sumy">Сумы</option>
+        <option value="Chernihiv">Чернигов</option>
+    </select>
+    
+    <button id="getWeatherButton">Получить погоду</button>
+
+    <canvas id="weatherChart" width="400" height="200" style="display: none;"></canvas>
+    <table id="weatherTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>Время</th>
+                <th>Температура, °C</th>
+                <th>Ощущается как, °C</th>
+                <th>Влажность, %</th>
+                <th>Ветер, м/с</th>
+            </tr>
+        </thead>
+        <tbody id="weatherBody"></tbody>
+    </table>
+
+    <script>
+        async function fetchWeather(city) {
+            const response = await fetch('/weather');
+            const weatherData = await response.json();
+            return weatherData.find(data => data.current.name === city);
+        }
+
+        document.getElementById('getWeatherButton').addEventListener('click', async () => {
+            const citySelect = document.getElementById('citySelect');
+            const selectedCity = citySelect.value;
+
+            if (selectedCity) {
+                const weather = await fetchWeather(selectedCity);
+                const forecast = weather.forecast.list;
+
+                // Отобразить таблицу погоды
+                const weatherBody = document.getElementById('weatherBody');
+                weatherBody.innerHTML = ''; // Очистить предыдущие данные
+
+                forecast.forEach(item => {
+                    const time = new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const temperature = item.main.temp;
+                    const feelsLike = item.main.feels_like;
+                    const humidity = item.main.humidity;
+                    const wind = item.wind.speed;
+
+                    const row = `<tr>
+                        <td>${time}</td>
+                        <td>${temperature} °C</td>
+                        <td>${feelsLike} °C</td>
+                        <td>${humidity} %</td>
+                        <td>${wind} м/с</td>
+                    </tr>`;
+                    weatherBody.insertAdjacentHTML('beforeend', row);
+                });
+
+                // Показать таблицу и скрыть график
+                document.getElementById('weatherTable').style.display = 'table';
+                document.getElementById('weatherChart').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
